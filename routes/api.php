@@ -27,7 +27,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::group([
 
-    'middleware' => 'api',
+    'middleware' => ['api', 'cors'],
     'prefix' => 'auth'
 
 ], function ($router) {
@@ -39,12 +39,13 @@ Route::group([
     Route::post('register', [AuthController::class, 'register']);
 });
 
-Route::group(['middleware' => 'api', 'prefix' => 'admin'], function ($router) {
+Route::group(['middleware' => ['api', 'cors'], 'prefix' => 'admin'], function ($router) {
 
     Route::post('roles/assign', [UserController::class, 'assignRole']);
     Route::post('roles/unassign', [UserController::class, 'unassignRole']);
     Route::post('roles/users_by_role', [UserController::class, 'usersByRole']);
     Route::get('roles', [RolController::class, 'index']);
+    Route::post('users', [UserController::class, 'index']);
 
     Route::apiResource('tipo_negocio', TipoNegocioController::class);
     Route::apiResource('tipo_negocio/caracteristicas', CaracteristicaNegocioController::class);

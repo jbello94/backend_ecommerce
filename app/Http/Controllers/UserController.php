@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Rol;
+use App\Models\User;
 use App\Models\UserHasRol;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -17,6 +18,18 @@ class UserController extends Controller
     public function __construct()
     {
         $this->middleware('auth:api', ['except' => []]);
+    }
+
+    public function index(Request $request)
+    {
+        Controller::requireAdmin($request->user());
+
+        $users = User::orderBy('name')->get();
+
+        return response()->json([
+            "success" => true,
+            "users" => $users
+        ], 200);
     }
 
     public function usersByRole(Request $request)

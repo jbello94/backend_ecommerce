@@ -28,7 +28,7 @@ class AuthController extends Controller
      */
     public function login()
     {
-        $credentials = request(['username', 'password']);
+        $credentials = request(['email', 'password']);
 
         if (!$token = auth()->attempt($credentials)) {
             return response()->json(['error' => 'Unauthorized'], 401);
@@ -78,7 +78,15 @@ class AuthController extends Controller
      */
     protected function respondWithToken($token)
     {
+        $roles = [];
+
+        foreach (auth()->user()->user_has_roles as $key) {
+            array_push($roles, $key->role->role_name);
+        }
+
         return response()->json([
+            'user' => auth()->user()->name,
+            'roles' => $roles,
             'access_token' => $token,
             'token_type' => 'bearer',
             'expires_in' => auth()->factory()->getTTL() * 60
@@ -87,12 +95,10 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
-        
+
         $validator = Validator::make($request->all(), [
             'name' => "string|required",
-            'username' => "string|required|unique:users,username,1,id",
             'email' => "string|email|required|unique:users,email,1,id",
-            'telefono' => "numeric|required",
             'password' => "required|string|min:8"
         ]);
 
@@ -100,15 +106,21 @@ class AuthController extends Controller
         if ($validator->fails())
             return response()->json($validator->errors()->toJson(), 400);
 
-        $user = User::create($request->only(['name', 'username', 'email', 'telefono']) + [
-            'password' => bcrypt($request->password)
-        ]);
-
-        
-
-        return response()->json([
-            'message' => "Usuario registrado",
-            'user' => $user
-        ], 201);
+        try {
+            $user = User::create($request->only(['name', 'email']) + [
+                'password' => bcrypt($request->password)
+            ]);
+            return response()->json([
+                'success' => true,
+                'message' => "Usuario registrado",
+                'user' => $user
+            ], 201);
+        } catch (\Throwable $th) {
+            return response()->json([
+                "message" => "Se ha producido un error interno del servidor",
+                "error" => $th->getMessage(),
+                "success" => false
+            ], 200);
+        }
     }
 }
